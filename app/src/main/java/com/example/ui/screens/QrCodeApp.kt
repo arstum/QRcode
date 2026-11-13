@@ -4,6 +4,7 @@ import android.content.ContextWrapper
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.os.LocaleList
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
@@ -11,6 +12,8 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.QrCode2
@@ -40,6 +43,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
@@ -49,17 +53,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.example.R
 import com.example.data.model.AppLanguage
 import com.example.data.model.AppThemeMode
 import com.example.ui.theme.QRcodeTheme
 import com.example.ui.viewmodel.AppDestination
 import com.example.ui.viewmodel.QrViewModel
+import kotlinx.coroutines.launch
 
 private data class NavTabMeta(
     val destination: AppDestination,
@@ -134,11 +134,16 @@ fun QrCodeApp(viewModel: QrViewModel) {
         LocalConfiguration provides localizedConfig
     ) {
         QRcodeTheme(darkTheme = useDarkTheme) {
-            val navController = rememberNavController()
-            val backStackEntry by navController.currentBackStackEntryAsState()
-            val currentRoute = backStackEntry?.destination?.route ?: AppDestination.SCAN.route
-            val currentTab = AppDestination.entries.firstOrNull { it.route == currentRoute }
-                ?: AppDestination.SCAN
+            val tabCount = appNavTabs.size
+            val initialPage = remember { (Int.MAX_VALUE / 2).let { it - (it % tabCount) } }
+            val pagerState = rememberPagerState(
+                initialPage = initialPage,
+                pageCount = { Int.MAX_VALUE }
+            )
+            val coroutineScope = rememberCoroutineScope()
+            val currentTabIndex = ((pagerState.currentPage % tabCount) + tabCount) % tabCount
+            val currentTab = appNavTabs[currentTabIndex].destination
+            val currentRoute = currentTab.route
 
             val snackbarHostState = remember { SnackbarHostState() }
             LaunchedEffect(localizedContext) {
@@ -148,21 +153,32 @@ fun QrCodeApp(viewModel: QrViewModel) {
                 }
             }
 
+            LaunchedEffect(currentTab, scanState.isCameraActive) {
+                if (currentTab != AppDestination.SCAN && scanState.isCameraActive) {
+                    viewModel.closeCameraScanner()
+                }
+            }
+
             val navigateToTab: (AppDestination) -> Unit = { dest ->
                 if (dest != AppDestination.SCAN && scanState.isCameraActive) {
                     viewModel.closeCameraScanner()
                 }
-                navController.navigate(dest.route) {
-                    popUpTo(navController.graph.findStartDestination().id) {
-                        saveState = true
+                val targetIndex = appNavTabs.indexOfFirst { it.destination == dest }
+                    .coerceAtLeast(0)
+                if (targetIndex != currentTabIndex) {
+                    val delta = targetIndex - currentTabIndex
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(pagerState.currentPage + delta)
                     }
-                    launchSingleTop = true
-                    restoreState = true
                 }
             }
 
             val hideChromeForFullScreenCamera =
                 currentTab == AppDestination.SCAN && scanState.isCameraActive
+
+            BackHandler(enabled = currentTab != AppDestination.SCAN && !hideChromeForFullScreenCamera) {
+                navigateToTab(AppDestination.SCAN)
+            }
 
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                 val useNavigationRail = maxWidth >= 600.dp
@@ -261,72 +277,79 @@ fun QrCodeApp(viewModel: QrViewModel) {
                             }
                         }
 
-                        NavHost(
-                            navController = navController,
-                            startDestination = AppDestination.SCAN.route,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            composable(AppDestination.GENERATE.route) {
-                                GenerateScreen(
-                                    state = generateState,
-                                    preferences = preferences,
-                                    onInputChange = { viewModel.updateGenerateInput(it) },
-                                    onErrorCorrectionChange = { viewModel.updateErrorCorrection(it) },
-                                    onToggleOptions = { viewModel.toggleGenerateOptions() },
-                                    onPasteClipboard = { viewModel.pasteClipboardIntoGenerate() },
-                                    onSaveClick = { viewModel.saveCurrentQrToGallery() },
-                                    onCopyImageClick = { viewModel.copyCurrentQrImage() },
-                                    onShareClick = { viewModel.shareCurrentQrImage(localizedContext) }
-                                )
-                            }
+                        HorizontalPager(
+                            state = pagerState,
+                            userScrollEnabled = !hideChromeForFullScreenCamera,
+                            key = { it },
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxSize()
+                                .testTag("main_menu_pager")
+                        ) { page ->
+                            val pageTabIndex = ((page % tabCount) + tabCount) % tabCount
+                            when (appNavTabs[pageTabIndex].destination) {
+                                AppDestination.GENERATE -> {
+                                    GenerateScreen(
+                                        state = generateState,
+                                        preferences = preferences,
+                                        onInputChange = { viewModel.updateGenerateInput(it) },
+                                        onErrorCorrectionChange = { viewModel.updateErrorCorrection(it) },
+                                        onToggleOptions = { viewModel.toggleGenerateOptions() },
+                                        onPasteClipboard = { viewModel.pasteClipboardIntoGenerate() },
+                                        onSaveClick = { viewModel.saveCurrentQrToGallery() },
+                                        onCopyImageClick = { viewModel.copyCurrentQrImage() },
+                                        onShareClick = { viewModel.shareCurrentQrImage(localizedContext) }
+                                    )
+                                }
 
-                            composable(AppDestination.SCAN.route) {
-                                ScanScreen(
-                                    state = scanState,
-                                    onOpenCamera = { viewModel.openCameraScanner() },
-                                    onCloseCamera = { viewModel.closeCameraScanner() },
-                                    onToggleTorch = { viewModel.toggleTorch() },
-                                    onToggleLens = { viewModel.toggleCameraLens() },
-                                    onCameraQrDetected = { viewModel.onCameraQrDetected(it) },
-                                    onPickImageUri = { viewModel.decodeQrFromImageUri(it) },
-                                    onScanClipboard = { viewModel.scanFromClipboard() },
-                                    onDismissResult = { viewModel.dismissScanResult() },
-                                    onUseAsGenerate = { content ->
-                                        viewModel.applyGeneratedTemplate(content)
-                                        navigateToTab(AppDestination.GENERATE)
-                                    },
-                                    onShowMessage = { resId -> viewModel.showMessage(resId) }
-                                )
-                            }
+                                AppDestination.SCAN -> {
+                                    ScanScreen(
+                                        state = scanState,
+                                        onOpenCamera = { viewModel.openCameraScanner() },
+                                        onCloseCamera = { viewModel.closeCameraScanner() },
+                                        onToggleTorch = { viewModel.toggleTorch() },
+                                        onToggleLens = { viewModel.toggleCameraLens() },
+                                        onCameraQrDetected = { viewModel.onCameraQrDetected(it) },
+                                        onPickImageUri = { viewModel.decodeQrFromImageUri(it) },
+                                        onScanClipboard = { viewModel.scanFromClipboard() },
+                                        onDismissResult = { viewModel.dismissScanResult() },
+                                        onUseAsGenerate = { content ->
+                                            viewModel.applyGeneratedTemplate(content)
+                                            navigateToTab(AppDestination.GENERATE)
+                                        },
+                                        onShowMessage = { resId -> viewModel.showMessage(resId) }
+                                    )
+                                }
 
-                            composable(AppDestination.HISTORY.route) {
-                                HistoryScreen(
-                                    historyList = historyList,
-                                    isHistoryPaused = preferences.pauseHistoryRecording,
-                                    onItemClick = { item ->
-                                        viewModel.applyGeneratedTemplate(item.content)
-                                        navigateToTab(AppDestination.GENERATE)
-                                    },
-                                    onDeleteItem = { viewModel.deleteHistoryItem(it) },
-                                    onClearAll = { viewModel.clearAllHistory() },
-                                    onTogglePause = { viewModel.togglePauseHistory() },
-                                    onShowMessage = { resId -> viewModel.showMessage(resId) }
-                                )
-                            }
+                                AppDestination.HISTORY -> {
+                                    HistoryScreen(
+                                        historyList = historyList,
+                                        isHistoryPaused = preferences.pauseHistoryRecording,
+                                        onItemClick = { item ->
+                                            viewModel.applyGeneratedTemplate(item.content)
+                                            navigateToTab(AppDestination.GENERATE)
+                                        },
+                                        onDeleteItem = { viewModel.deleteHistoryItem(it) },
+                                        onClearAll = { viewModel.clearAllHistory() },
+                                        onTogglePause = { viewModel.togglePauseHistory() },
+                                        onShowMessage = { resId -> viewModel.showMessage(resId) }
+                                    )
+                                }
 
-                            composable(AppDestination.SETTINGS.route) {
-                                SettingsScreen(
-                                    preferences = preferences,
-                                    onDarkModeInvertedChange = { viewModel.setDarkModeInvertedQr(it) },
-                                    onPlaySoundChange = { viewModel.setPlaySoundOnScan(it) },
-                                    onVibrateChange = { viewModel.setVibrateOnScan(it) },
-                                    onPauseHistoryChange = { viewModel.setPauseHistoryRecording(it) },
-                                    onDefaultErrorCorrectionChange = {
-                                        viewModel.setDefaultErrorCorrection(it)
-                                    },
-                                    onThemeModeChange = { viewModel.setThemeMode(it) },
-                                    onLanguageChange = { viewModel.setAppLanguage(it) }
-                                )
+                                AppDestination.SETTINGS -> {
+                                    SettingsScreen(
+                                        preferences = preferences,
+                                        onDarkModeInvertedChange = { viewModel.setDarkModeInvertedQr(it) },
+                                        onPlaySoundChange = { viewModel.setPlaySoundOnScan(it) },
+                                        onVibrateChange = { viewModel.setVibrateOnScan(it) },
+                                        onPauseHistoryChange = { viewModel.setPauseHistoryRecording(it) },
+                                        onDefaultErrorCorrectionChange = {
+                                            viewModel.setDefaultErrorCorrection(it)
+                                        },
+                                        onThemeModeChange = { viewModel.setThemeMode(it) },
+                                        onLanguageChange = { viewModel.setAppLanguage(it) }
+                                    )
+                                }
                             }
                         }
                     }

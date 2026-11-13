@@ -8,6 +8,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
 import androidx.test.core.app.ApplicationProvider
 import com.example.data.model.QrErrorCorrection
 import com.example.qr.QrCodeEngine
@@ -111,6 +114,58 @@ class ExampleRobolectricTest {
         composeRule.waitUntil(timeoutMillis = 5_000) {
             runCatching {
                 composeRule.onNodeWithText("表示言語").assertIsDisplayed()
+                true
+            }.getOrDefault(false)
+        }
+    }
+
+    @Test
+    fun `cyclic touch swipe switches all menu tabs smoothly`() {
+        composeRule.waitForIdle()
+        // Starts on SCAN
+        composeRule.onNodeWithTag("scan_camera_button").assertIsDisplayed()
+
+        // Swipe right from first tab (SCAN) -> wraps cyclically to last tab (SETTINGS)
+        composeRule.onNodeWithTag("main_menu_pager").performTouchInput { swipeRight() }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching {
+                composeRule.onNodeWithTag("settings_lang_system").assertIsDisplayed()
+                true
+            }.getOrDefault(false)
+        }
+
+        // Swipe left from last tab (SETTINGS) -> wraps cyclically back to SCAN
+        composeRule.onNodeWithTag("main_menu_pager").performTouchInput { swipeLeft() }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching {
+                composeRule.onNodeWithTag("scan_camera_button").assertIsDisplayed()
+                true
+            }.getOrDefault(false)
+        }
+
+        // Swipe left: SCAN -> GENERATE
+        composeRule.onNodeWithTag("main_menu_pager").performTouchInput { swipeLeft() }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching {
+                composeRule.onNodeWithTag("generate_input_field").assertIsDisplayed()
+                true
+            }.getOrDefault(false)
+        }
+
+        // Swipe left: GENERATE -> HISTORY
+        composeRule.onNodeWithTag("main_menu_pager").performTouchInput { swipeLeft() }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching {
+                composeRule.onNodeWithTag("history_clear_button").assertIsDisplayed()
+                true
+            }.getOrDefault(false)
+        }
+
+        // Swipe left: HISTORY -> SETTINGS
+        composeRule.onNodeWithTag("main_menu_pager").performTouchInput { swipeLeft() }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching {
+                composeRule.onNodeWithTag("settings_lang_system").assertIsDisplayed()
                 true
             }.getOrDefault(false)
         }
