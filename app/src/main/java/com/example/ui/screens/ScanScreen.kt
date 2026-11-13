@@ -8,9 +8,12 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.core.LinearEasing
@@ -31,8 +34,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -79,15 +84,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import java.util.concurrent.TimeUnit
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -115,7 +126,7 @@ fun ScanScreen(
     onScanClipboard: () -> Unit,
     onDismissResult: () -> Unit,
     onUseAsGenerate: (String) -> Unit,
-    onShowMessage: (String) -> Unit,
+    onShowMessage: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -129,7 +140,7 @@ fun ScanScreen(
             onOpenCamera()
         } else {
             cameraPermissionDenied = true
-            onShowMessage("需要相机权限才能使用实时扫码")
+            onShowMessage(R.string.scan_permission_required_msg)
         }
     }
 
@@ -172,8 +183,8 @@ fun ScanScreen(
             onToggleLens = onToggleLens,
             onPickFromGallery = launchGalleryPicker,
             onQrDetected = onCameraQrDetected,
-            onCameraError = { msg ->
-                onShowMessage(msg)
+            onCameraError = {
+                onShowMessage(R.string.camera_preview_error)
                 onCloseCamera()
             },
             modifier = modifier
@@ -197,20 +208,21 @@ fun ScanScreen(
             sheetState = sheetState,
             containerColor = MaterialTheme.colorScheme.surface
         ) {
+            val shareChooserTitle = stringResource(R.string.chooser_share_text)
             ScannedResultSheetContent(
                 result = result,
                 onCopyText = {
                     QrMediaHelper.copyTextToClipboard(context, "QR Result", result.content)
-                    onShowMessage("已复制识别结果")
+                    onShowMessage(R.string.msg_copied_text)
                 },
                 onOpenUrl = {
                     QrMediaHelper.openExternalUrl(context, result.content).onFailure {
-                        onShowMessage("无法打开该链接")
+                        onShowMessage(R.string.msg_open_url_failed)
                     }
                 },
                 onShareText = {
-                    QrMediaHelper.shareText(context, result.content).onFailure {
-                        onShowMessage("无法打开系统分享")
+                    QrMediaHelper.shareText(context, result.content, shareChooserTitle).onFailure {
+                        onShowMessage(R.string.msg_share_failed)
                     }
                 },
                 onGenerateQr = {
@@ -265,13 +277,13 @@ private fun ScanHubView(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "选择扫描方式",
+                text = stringResource(R.string.scan_choose_method),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "所有识别均在本地离线完成，不上传任何图片或内容",
+                text = stringResource(R.string.scan_offline_note),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -307,7 +319,7 @@ private fun ScanHubView(
             if (cameraPermissionDenied) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "相机权限被拒绝。您可以点击上方按钮重新授权，或使用下方的相册图片扫描。",
+                    text = stringResource(R.string.scan_permission_denied_tip),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                     textAlign = TextAlign.Center
@@ -340,7 +352,7 @@ private fun ScanHubView(
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = "正在解析图片中的二维码…",
+                            text = stringResource(R.string.scan_decoding_image),
                             style = MaterialTheme.typography.titleSmall
                         )
                     } else {
@@ -429,7 +441,7 @@ private fun LiveCameraScannerView(
     onToggleLens: () -> Unit,
     onPickFromGallery: () -> Unit,
     onQrDetected: (String) -> Unit,
-    onCameraError: (String) -> Unit,
+    onCameraError: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -441,6 +453,8 @@ private fun LiveCameraScannerView(
     }
     val analyzerExecutor = remember { Executors.newSingleThreadExecutor() }
     var boundCamera by remember { mutableStateOf<Camera?>(null) }
+
+    val mainExecutor = remember(context) { ContextCompat.getMainExecutor(context) }
 
     LaunchedEffect(boundCamera, isTorchEnabled) {
         boundCamera?.let { cam ->
@@ -458,12 +472,23 @@ private fun LiveCameraScannerView(
                 val preview = Preview.Builder().build().also {
                     it.surfaceProvider = previewView.surfaceProvider
                 }
+                val resolutionSelector = ResolutionSelector.Builder()
+                    .setResolutionStrategy(
+                        ResolutionStrategy(
+                            android.util.Size(1280, 720),
+                            ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
+                        )
+                    )
+                    .build()
                 val imageAnalysis = ImageAnalysis.Builder()
+                    .setResolutionSelector(resolutionSelector)
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
                     .also { analysis ->
                         analysis.setAnalyzer(analyzerExecutor) { imageProxy ->
-                            analyzeImageProxy(imageProxy, onQrDetected)
+                            analyzeImageProxy(imageProxy) { decoded ->
+                                mainExecutor.execute { onQrDetected(decoded) }
+                            }
                         }
                     }
 
@@ -474,17 +499,29 @@ private fun LiveCameraScannerView(
                 }
 
                 cameraProvider.unbindAll()
-                boundCamera = cameraProvider.bindToLifecycle(
+                val cam = cameraProvider.bindToLifecycle(
                     lifecycleOwner,
                     selector,
                     preview,
                     imageAnalysis
                 )
+                boundCamera = cam
+                val centerPoint = previewView.meteringPointFactory.createPoint(
+                    previewView.width.coerceAtLeast(2) / 2f,
+                    previewView.height.coerceAtLeast(2) / 2f
+                )
+                val focusAction = FocusMeteringAction.Builder(
+                    centerPoint,
+                    FocusMeteringAction.FLAG_AF
+                )
+                    .setAutoCancelDuration(3, TimeUnit.SECONDS)
+                    .build()
+                cam.cameraControl.startFocusAndMetering(focusAction)
             }.onFailure {
-                onCameraError("无法启动相机预览，请改用相册图片扫描")
+                onCameraError()
             }
         }
-        cameraProviderFuture.addListener(listener, ContextCompat.getMainExecutor(context))
+        cameraProviderFuture.addListener(listener, mainExecutor)
 
         onDispose {
             runCatching {
@@ -506,6 +543,16 @@ private fun LiveCameraScannerView(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black)
+            .pointerInput(boundCamera) {
+                detectTapGestures { offset ->
+                    val cam = boundCamera ?: return@detectTapGestures
+                    val point = previewView.meteringPointFactory.createPoint(offset.x, offset.y)
+                    val action = FocusMeteringAction.Builder(point, FocusMeteringAction.FLAG_AF)
+                        .setAutoCancelDuration(3, TimeUnit.SECONDS)
+                        .build()
+                    cam.cameraControl.startFocusAndMetering(action)
+                }
+            }
     ) {
         AndroidView(
             factory = { previewView },
@@ -522,7 +569,8 @@ private fun LiveCameraScannerView(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.TopCenter)
-                .padding(horizontal = 16.dp, vertical = 16.dp),
+                .statusBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -536,7 +584,7 @@ private fun LiveCameraScannerView(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Close,
-                        contentDescription = "关闭相机",
+                        contentDescription = stringResource(R.string.camera_close_desc),
                         tint = Color.White
                     )
                 }
@@ -558,7 +606,13 @@ private fun LiveCameraScannerView(
                                 } else {
                                     Icons.Outlined.FlashlightOff
                                 },
-                                contentDescription = if (isTorchEnabled) "关闭闪光灯" else "打开闪光灯",
+                                contentDescription = stringResource(
+                                    if (isTorchEnabled) {
+                                        R.string.camera_torch_on_desc
+                                    } else {
+                                        R.string.camera_torch_off_desc
+                                    }
+                                ),
                                 tint = if (isTorchEnabled) Color(0xFF9DF0B8) else Color.White
                             )
                         }
@@ -575,7 +629,7 @@ private fun LiveCameraScannerView(
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.FlipCameraAndroid,
-                            contentDescription = "切换摄像头",
+                            contentDescription = stringResource(R.string.camera_flip_desc),
                             tint = Color.White
                         )
                     }
@@ -587,11 +641,12 @@ private fun LiveCameraScannerView(
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(horizontal = 24.dp, vertical = 28.dp),
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "将二维码置于框内即可自动识别",
+                text = stringResource(R.string.camera_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White
             )
@@ -608,7 +663,7 @@ private fun LiveCameraScannerView(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("从相册选择图片")
+                Text(stringResource(R.string.camera_pick_gallery))
             }
         }
     }
@@ -668,13 +723,22 @@ private fun ScannerReticleOverlay(
         val top = (size.height - boxSize) / 2f
         val cornerRadius = 20.dp.toPx()
 
-        drawRect(color = Color.Black.copy(alpha = 0.48f))
-        drawRoundRect(
-            color = Color.Transparent,
-            topLeft = Offset(left, top),
-            size = Size(boxSize, boxSize),
-            cornerRadius = CornerRadius(cornerRadius, cornerRadius),
-            blendMode = BlendMode.Clear
+        val overlayPath = Path().apply {
+            fillType = PathFillType.EvenOdd
+            addRect(Rect(0f, 0f, size.width, size.height))
+            addRoundRect(
+                RoundRect(
+                    left = left,
+                    top = top,
+                    right = left + boxSize,
+                    bottom = top + boxSize,
+                    cornerRadius = CornerRadius(cornerRadius, cornerRadius)
+                )
+            )
+        }
+        drawPath(
+            path = overlayPath,
+            color = Color.Black.copy(alpha = 0.48f)
         )
 
         val strokeWidth = 4.dp.toPx()
@@ -740,7 +804,7 @@ private fun ScannedResultSheetContent(
                 color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Text(
-                    text = "${result.sourceLabel} · ${result.kind.label}",
+                    text = "${stringResource(result.sourceLabelRes)} · ${stringResource(result.kind.labelRes)}",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
@@ -753,7 +817,7 @@ private fun ScannedResultSheetContent(
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Close,
-                    contentDescription = "关闭识别结果"
+                    contentDescription = stringResource(R.string.scan_result_close_desc)
                 )
             }
         }
@@ -797,7 +861,7 @@ private fun ScannedResultSheetContent(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("打开链接")
+                    Text(stringResource(R.string.scan_result_open_url))
                 }
             }
 
@@ -814,7 +878,7 @@ private fun ScannedResultSheetContent(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("复制文本")
+                Text(stringResource(R.string.scan_result_copy_text))
             }
         }
 
@@ -837,7 +901,7 @@ private fun ScannedResultSheetContent(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("转为二维码")
+                Text(stringResource(R.string.scan_result_to_generate))
             }
 
             OutlinedButton(
@@ -853,7 +917,7 @@ private fun ScannedResultSheetContent(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("分享内容")
+                Text(stringResource(R.string.scan_result_share))
             }
         }
     }

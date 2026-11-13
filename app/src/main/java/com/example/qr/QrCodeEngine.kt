@@ -127,7 +127,24 @@ object QrCodeEngine {
         width: Int,
         height: Int
     ): String? {
-        val source = PlanarYUVLuminanceSource(
+        val minSide = minOf(width, height)
+        val cropSize = (minSide * 0.78f).toInt().coerceAtLeast(16)
+        val cropLeft = ((width - cropSize) / 2).coerceAtLeast(0)
+        val cropTop = ((height - cropSize) / 2).coerceAtLeast(0)
+
+        val centerSource = PlanarYUVLuminanceSource(
+            yPlaneBytes,
+            width,
+            height,
+            cropLeft,
+            cropTop,
+            cropSize,
+            cropSize,
+            false
+        )
+        decodeLuminanceSource(centerSource)?.let { return it }
+
+        val fullSource = PlanarYUVLuminanceSource(
             yPlaneBytes,
             width,
             height,
@@ -137,7 +154,7 @@ object QrCodeEngine {
             height,
             false
         )
-        return decodeLuminanceSource(source)
+        return decodeLuminanceSource(fullSource)
     }
 
     private fun decodeLuminanceSource(source: LuminanceSource): String? {

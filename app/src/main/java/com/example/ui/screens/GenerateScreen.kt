@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -105,7 +106,6 @@ fun GenerateScreen(
                 .widthIn(max = 560.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Content input field matching screenshot's clean top box
             OutlinedTextField(
                 value = state.inputText,
                 onValueChange = onInputChange,
@@ -136,7 +136,7 @@ fun GenerateScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.Clear,
-                                contentDescription = "清空输入"
+                                contentDescription = stringResource(R.string.generate_clear_desc)
                             )
                         }
                     } else {
@@ -146,7 +146,7 @@ fun GenerateScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.ContentPaste,
-                                contentDescription = "粘贴剪贴板内容"
+                                contentDescription = stringResource(R.string.generate_paste_desc)
                             )
                         }
                     }
@@ -163,7 +163,6 @@ fun GenerateScreen(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Character length & Options row (mirrors screenshot 2)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -187,7 +186,7 @@ fun GenerateScreen(
                         .testTag("generate_options_toggle")
                 ) {
                     Text(
-                        text = "${stringResource(R.string.generate_options)} (${state.errorCorrection.code})",
+                        text = stringResource(R.string.generate_options_with_ec, state.errorCorrection.code),
                         style = MaterialTheme.typography.labelLarge
                     )
                     Spacer(modifier = Modifier.width(4.dp))
@@ -203,7 +202,6 @@ fun GenerateScreen(
                 }
             }
 
-            // Expandable Options panel
             AnimatedVisibility(visible = state.isOptionsExpanded) {
                 OutlinedCard(
                     modifier = Modifier
@@ -213,7 +211,7 @@ fun GenerateScreen(
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
                         Text(
-                            text = "容错纠错等级",
+                            text = stringResource(R.string.generate_ec_title),
                             style = MaterialTheme.typography.titleSmall,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -226,7 +224,9 @@ fun GenerateScreen(
                                 FilterChip(
                                     selected = state.errorCorrection == level,
                                     onClick = { onErrorCorrectionChange(level) },
-                                    label = { Text("${level.label} · ${level.percent}") },
+                                    label = {
+                                        Text("${stringResource(level.labelRes)} · ${level.percent}")
+                                    },
                                     modifier = Modifier.testTag("ec_chip_${level.code.lowercase()}")
                                 )
                             }
@@ -234,21 +234,22 @@ fun GenerateScreen(
 
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(
-                            text = "快捷模板",
+                            text = stringResource(R.string.generate_templates_title),
                             style = MaterialTheme.typography.titleSmall,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(6.dp))
+                        val wifiSample = stringResource(R.string.template_wifi_sample)
+                        val templates = listOf(
+                            stringResource(R.string.template_url_label) to "https://",
+                            stringResource(R.string.template_wifi_label) to wifiSample,
+                            stringResource(R.string.template_email_label) to "mailto:example@domain.com",
+                            stringResource(R.string.template_phone_label) to "tel:+8613800138000"
+                        )
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            val templates = listOf(
-                                "网址" to "https://",
-                                "Wi-Fi" to "WIFI:T:WPA;S:网络名称;P:密码;;",
-                                "邮箱" to "mailto:example@domain.com",
-                                "电话" to "tel:+8613800138000"
-                            )
                             templates.forEach { (title, sample) ->
                                 Surface(
                                     shape = RoundedCornerShape(8.dp),
@@ -272,7 +273,6 @@ fun GenerateScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // QR Code Preview Box
             val qrCardBg = if (useInvertedColors) Color(0xFF0A0A0A) else Color.White
             val qrForeground = if (useInvertedColors) Color.White else Color.Black
 
@@ -332,7 +332,6 @@ fun GenerateScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Bottom Action Bar (Save / Copy / Share)
             val hasQr = state.qrMatrix != null
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -342,8 +341,9 @@ fun GenerateScreen(
                 FilledTonalButton(
                     onClick = onSaveClick,
                     enabled = hasQr,
+                    contentPadding = PaddingValues(horizontal = 10.dp),
                     modifier = Modifier
-                        .weight(1f)
+                        .weight(0.95f)
                         .heightIn(min = 48.dp)
                         .testTag("generate_save_button"),
                     colors = ButtonDefaults.filledTonalButtonColors(
@@ -356,18 +356,21 @@ fun GenerateScreen(
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(5.dp))
                     Text(
                         text = stringResource(R.string.generate_save),
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        softWrap = false
                     )
                 }
 
                 OutlinedButton(
                     onClick = onCopyImageClick,
                     enabled = hasQr,
+                    contentPadding = PaddingValues(horizontal = 10.dp),
                     modifier = Modifier
-                        .weight(1.1f)
+                        .weight(1.25f)
                         .heightIn(min = 48.dp)
                         .testTag("generate_copy_button")
                 ) {
@@ -376,13 +379,18 @@ fun GenerateScreen(
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = stringResource(R.string.generate_copy))
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Text(
+                        text = stringResource(R.string.generate_copy),
+                        maxLines = 1,
+                        softWrap = false
+                    )
                 }
 
                 OutlinedButton(
                     onClick = onShareClick,
                     enabled = hasQr,
+                    contentPadding = PaddingValues(horizontal = 10.dp),
                     modifier = Modifier
                         .weight(0.95f)
                         .heightIn(min = 48.dp)
@@ -393,15 +401,19 @@ fun GenerateScreen(
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = stringResource(R.string.generate_share))
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Text(
+                        text = stringResource(R.string.generate_share),
+                        maxLines = 1,
+                        softWrap = false
+                    )
                 }
             }
 
             if (useInvertedColors && hasQr) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = "当前为深色反色预览；保存、复制或分享的图片将始终保持白底黑码以确保最佳识别率。",
+                    text = stringResource(R.string.generate_inverted_preview_note),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center

@@ -1,0 +1,130 @@
+<resources>
+
+    <!-- 导航栏 -->
+    <string name="tab_scan">扫描</string>
+    <string name="tab_generate">生成</string>
+    <string name="tab_history">历史记录</string>
+    <string name="tab_settings">设置</string>
+
+    <!-- 生成页 -->
+    <string name="generate_input_hint">输入网址、文本或任意内容…</string>
+    <string name="generate_clear_desc">清空输入</string>
+    <string name="generate_paste_desc">粘贴剪贴板内容</string>
+    <string name="generate_length_label">长度：%1$d</string>
+    <string name="generate_options">选项</string>
+    <string name="generate_options_with_ec">选项 (%1$s)</string>
+    <string name="generate_ec_title">容错纠错等级</string>
+    <string name="generate_templates_title">快捷模板</string>
+    <string name="template_url_label">网址</string>
+    <string name="template_wifi_label">Wi-Fi</string>
+    <string name="template_email_label">邮箱</string>
+    <string name="template_phone_label">电话</string>
+    <string name="template_wifi_sample" translatable="false">WIFI:T:WPA;S:网络名称;P:密码;;</string>
+    <string name="generate_save">保存</string>
+    <string name="generate_copy">复制图片</string>
+    <string name="generate_share">分享</string>
+    <string name="generate_empty_tip">输入内容即可离线生成高清二维码</string>
+    <string name="generate_inverted_preview_note">当前为深色反色预览；保存、复制或分享的图片将始终保持白底黑码以确保最佳识别率。</string>
+
+    <!-- 纠错等级 -->
+    <string name="ec_low">低 (L)</string>
+    <string name="ec_medium">中 (M)</string>
+    <string name="ec_quartile">较高 (Q)</string>
+    <string name="ec_high">高 (H)</string>
+
+    <!-- 扫描页 -->
+    <string name="scan_choose_method">选择扫描方式</string>
+    <string name="scan_offline_note">所有识别均在本地离线完成，不上传任何图片或内容</string>
+    <string name="scan_camera_btn">用摄像头扫描</string>
+    <string name="scan_gallery_btn">从相册选择图片扫描</string>
+    <string name="scan_clipboard_btn">扫描剪贴板中的图片</string>
+    <string name="scan_decoding_image">正在解析图片中的二维码…</string>
+    <string name="scan_or_divider">或者</string>
+    <string name="scan_permission_denied_tip">相机权限被拒绝。您可以点击上方按钮重新授权，或使用下方的相册图片扫描。</string>
+    <string name="scan_permission_required_msg">需要相机权限才能使用实时扫码</string>
+    <string name="camera_close_desc">关闭相机</string>
+    <string name="camera_torch_on_desc">关闭闪光灯</string>
+    <string name="camera_torch_off_desc">打开闪光灯</string>
+    <string name="camera_flip_desc">切换摄像头</string>
+    <string name="camera_hint">将二维码置于框内即可自动识别</string>
+    <string name="camera_pick_gallery">从相册选择图片</string>
+    <string name="camera_preview_error">无法启动相机预览，请改用相册图片扫描</string>
+
+    <!-- 扫描来源与识别类型 -->
+    <string name="scan_source_camera">摄像头扫描</string>
+    <string name="scan_source_gallery">相册图片</string>
+    <string name="scan_source_clipboard_image">剪贴板图片</string>
+    <string name="scan_source_clipboard_text">剪贴板内容</string>
+    <string name="kind_url">网址链接</string>
+    <string name="kind_wifi">Wi-Fi 配置</string>
+    <string name="kind_email">电子邮箱</string>
+    <string name="kind_phone">电话号码</string>
+    <string name="kind_text">纯文本</string>
+
+    <!-- 识别结果弹窗 -->
+    <string name="scan_result_close_desc">关闭识别结果</string>
+    <string name="scan_result_open_url">打开链接</string>
+    <string name="scan_result_copy_text">复制文本</string>
+    <string name="scan_result_to_generate">转为二维码</string>
+    <string name="scan_result_share">分享内容</string>
+
+    <!-- 历史记录页 -->
+    <string name="history_paused_banner">历史记录当前已暂停，新生成或扫描的内容不会被保存。</string>
+    <string name="history_empty_title">暂无历史记录</string>
+    <string name="history_empty_subtitle">生成或扫描的二维码会自动保存在本地</string>
+    <string name="history_type_generated">生成</string>
+    <string name="history_type_scanned">扫描</string>
+    <string name="history_copy_desc">复制内容</string>
+    <string name="history_delete_desc">删除记录</string>
+    <string name="history_clear">清除</string>
+    <string name="history_pause">暂停</string>
+    <string name="history_resume">继续</string>
+    <string name="history_clear_dialog_title">清空历史记录？</string>
+    <string name="history_clear_dialog_body">确定要删除所有本地保存的二维码历史记录吗？此操作无法撤销。</string>
+    <string name="action_cancel">取消</string>
+
+    <!-- 设置页 -->
+    <string name="settings_section_generate">二维码生成</string>
+    <string name="settings_dark_inverted_title">在深色模式下生成黑色背景上的白色二维码</string>
+    <string name="settings_dark_inverted_desc">在深色模式下，界面预览将显示深色背景上的浅色前景色二维码。某些扫描仪可能难以扫描此类反色二维码；您通过“保存”“复制图片”和“分享”导出的二维码将始终保持白色背景和黑色前景色。</string>
+    <string name="settings_default_ec_title">默认容错纠错等级</string>
+    <string name="settings_theme_title">应用外观主题</string>
+    <string name="theme_system">跟随系统</string>
+    <string name="theme_light">浅色</string>
+    <string name="theme_dark">深色</string>
+    <string name="settings_language_title">界面语言</string>
+    <string name="lang_system">跟随系统</string>
+
+    <string name="settings_section_scan">二维码扫描</string>
+    <string name="settings_sound_title">扫描成功时播放声音</string>
+    <string name="settings_sound_desc">成功扫描到二维码时播放清晰的提示音。</string>
+    <string name="settings_vibrate_title">扫描成功时振动提示</string>
+    <string name="settings_vibrate_desc">成功识别二维码时触发轻触振动反馈。</string>
+    <string name="settings_pause_history_title">暂停历史记录</string>
+    <string name="settings_pause_history_desc">开启后，新生成或新扫描的二维码将不会记录到本地历史列表。</string>
+
+    <string name="settings_section_about">关于 QRcode</string>
+    <string name="about_title">QRcode · 离线二维码生成器与扫描器</string>
+    <string name="about_version_line">版本 v%1$s · 纯离线本地运行 · 不上传任何用户数据</string>
+    <string name="about_arch_line">目标架构：arm64-v8a / x86_64 (64-bit) · 适配 Android 15</string>
+
+    <!-- 提示消息 -->
+    <string name="msg_qr_gen_failed">二维码生成失败</string>
+    <string name="msg_saved_gallery">已保存到相册 (Pictures/QRcode)</string>
+    <string name="msg_save_failed">保存失败：%1$s</string>
+    <string name="msg_copied_image">已复制二维码图片到剪贴板</string>
+    <string name="msg_copy_failed">复制失败：%1$s</string>
+    <string name="msg_copied_text">已复制内容</string>
+    <string name="msg_share_failed">无法打开系统分享</string>
+    <string name="msg_open_url_failed">无法打开该链接</string>
+    <string name="msg_clipboard_no_text">剪贴板中没有可用文本</string>
+    <string name="msg_clipboard_pasted">已粘贴剪贴板内容</string>
+    <string name="msg_no_qr_in_image">未在该图片中识别到二维码</string>
+    <string name="msg_clipboard_empty">剪贴板中没有图片或文本</string>
+    <string name="msg_history_cleared">历史记录已清空</string>
+    <string name="msg_history_paused">已暂停记录历史</string>
+    <string name="msg_history_resumed">已恢复记录历史</string>
+    <string name="chooser_share_qr">分享二维码</string>
+    <string name="chooser_share_text">分享内容</string>
+    <string name="error_unknown">未知错误</string>
+</resources>

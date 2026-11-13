@@ -74,4 +74,8 @@ class QrRepository(
     suspend fun setThemeMode(mode: AppThemeMode) {
         preferencesDataStore.setThemeMode(mode)
     }
+
+    suspend fun setAppLanguage(language: com.example.data.model.AppLanguage) {
+        preferencesDataStore.setAppLanguage(language)
+    }
 }

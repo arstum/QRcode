@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.data.model.AppLanguage
 import com.example.data.model.AppThemeMode
 import com.example.data.model.QrErrorCorrection
 import com.example.data.model.QrPreferences
@@ -24,6 +25,7 @@ class QrPreferencesDataStore(private val context: Context) {
         val PAUSE_HISTORY = booleanPreferencesKey("pause_history_recording")
         val DEFAULT_EC = stringPreferencesKey("default_error_correction")
         val THEME_MODE = stringPreferencesKey("theme_mode")
+        val APP_LANGUAGE = stringPreferencesKey("app_language")
     }
 
     val preferencesFlow: Flow<QrPreferences> = context.qrDataStore.data.map { prefs ->
@@ -35,7 +37,8 @@ class QrPreferencesDataStore(private val context: Context) {
             defaultErrorCorrection = QrErrorCorrection.fromCode(prefs[Keys.DEFAULT_EC] ?: "M"),
             themeMode = prefs[Keys.THEME_MODE]?.let { name ->
                 AppThemeMode.entries.firstOrNull { it.name == name }
-            } ?: AppThemeMode.SYSTEM
+            } ?: AppThemeMode.SYSTEM,
+            appLanguage = AppLanguage.fromTag(prefs[Keys.APP_LANGUAGE] ?: "")
         )
     }
 
@@ -61,5 +64,9 @@ class QrPreferencesDataStore(private val context: Context) {
 
     suspend fun setThemeMode(mode: AppThemeMode) {
         context.qrDataStore.edit { it[Keys.THEME_MODE] = mode.name }
+    }
+
+    suspend fun setAppLanguage(language: AppLanguage) {
+        context.qrDataStore.edit { it[Keys.APP_LANGUAGE] = language.tag }
     }
 }

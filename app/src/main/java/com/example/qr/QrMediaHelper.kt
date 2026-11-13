@@ -72,27 +72,52 @@ object QrMediaHelper {
         clipboard.setPrimaryClip(ClipData.newPlainText(label, text))
     }
 
-    fun shareQrBitmap(context: Context, bitmap: Bitmap, content: String): Result<Unit> = runCatching {
+    fun shareQrBitmap(
+        context: Context,
+        bitmap: Bitmap,
+        content: String,
+        chooserTitle: String = context.getString(com.example.R.string.chooser_share_qr)
+    ): Result<Unit> = runCatching {
         val uri = writeTempQrPngForProvider(context, bitmap)
-        val intent = Intent(Intent.ACTION_SEND).apply {
+        val sendIntent = Intent(Intent.ACTION_SEND).apply {
             type = "image/png"
             putExtra(Intent.EXTRA_STREAM, uri)
             putExtra(Intent.EXTRA_TEXT, content)
+            clipData = ClipData.newRawUri("QRcode", uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        context.startActivity(Intent.createChooser(intent, "分享二维码"))
+        val chooser = Intent.createChooser(sendIntent, chooserTitle).apply {
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            if (context !is android.app.Activity) {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+        }
+        context.startActivity(chooser)
     }
 
-    fun shareText(context: Context, text: String): Result<Unit> = runCatching {
-        val intent = Intent(Intent.ACTION_SEND).apply {
+    fun shareText(
+        context: Context,
+        text: String,
+        chooserTitle: String = context.getString(com.example.R.string.chooser_share_text)
+    ): Result<Unit> = runCatching {
+        val sendIntent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, text)
         }
-        context.startActivity(Intent.createChooser(intent, "分享内容"))
+        val chooser = Intent.createChooser(sendIntent, chooserTitle).apply {
+            if (context !is android.app.Activity) {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+        }
+        context.startActivity(chooser)
     }
 
     fun openExternalUrl(context: Context, url: String): Result<Unit> = runCatching {
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+            if (context !is android.app.Activity) {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+        }
         context.startActivity(intent)
     }
 

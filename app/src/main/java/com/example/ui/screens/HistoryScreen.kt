@@ -65,7 +65,7 @@ fun HistoryScreen(
     onDeleteItem: (Long) -> Unit,
     onClearAll: () -> Unit,
     onTogglePause: () -> Unit,
-    onShowMessage: (String) -> Unit,
+    onShowMessage: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -79,7 +79,7 @@ fun HistoryScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "历史记录当前已暂停，新生成或扫描的内容不会被保存。",
+                    text = stringResource(R.string.history_paused_banner),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -104,13 +104,13 @@ fun HistoryScreen(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "暂无历史记录",
+                        text = stringResource(R.string.history_empty_title),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "生成或扫描的二维码会自动保存在本地",
+                        text = stringResource(R.string.history_empty_subtitle),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -133,14 +133,19 @@ fun HistoryScreen(
                     } else {
                         MaterialTheme.colorScheme.surface
                     }
+                    val typeLabel = stringResource(
+                        if (item.type == QrHistoryType.GENERATED) {
+                            R.string.history_type_generated
+                        } else {
+                            R.string.history_type_scanned
+                        }
+                    )
 
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(rowBg)
-                            .clickable {
-                                onItemClick(item)
-                            }
+                            .clickable { onItemClick(item) }
                             .padding(start = 16.dp, end = 6.dp, top = 8.dp, bottom = 8.dp)
                             .heightIn(min = 48.dp)
                             .testTag("history_item_${item.id}"),
@@ -152,7 +157,7 @@ fun HistoryScreen(
                             } else {
                                 Icons.Outlined.QrCodeScanner
                             },
-                            contentDescription = if (item.type == QrHistoryType.GENERATED) "已生成" else "已扫描",
+                            contentDescription = typeLabel,
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
@@ -171,7 +176,7 @@ fun HistoryScreen(
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "${if (item.type == QrHistoryType.GENERATED) "生成" else "扫描"} · ${dateFormatter.format(Date(item.createdAt))}",
+                                text = "$typeLabel · ${dateFormatter.format(Date(item.createdAt))}",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -180,13 +185,13 @@ fun HistoryScreen(
                         IconButton(
                             onClick = {
                                 QrMediaHelper.copyTextToClipboard(context, "QR History", item.content)
-                                onShowMessage("已复制内容")
+                                onShowMessage(R.string.msg_copied_text)
                             },
                             modifier = Modifier.testTag("history_copy_${item.id}")
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.ContentCopy,
-                                contentDescription = "复制内容",
+                                contentDescription = stringResource(R.string.history_copy_desc),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -197,7 +202,7 @@ fun HistoryScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.DeleteOutline,
-                                contentDescription = "删除记录",
+                                contentDescription = stringResource(R.string.history_delete_desc),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -208,7 +213,6 @@ fun HistoryScreen(
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-        // Bottom control bar matching screenshot 4: Clear & Pause/Resume
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -272,8 +276,8 @@ fun HistoryScreen(
     if (showClearDialog) {
         AlertDialog(
             onDismissRequest = { showClearDialog = false },
-            title = { Text("清空历史记录？") },
-            text = { Text("确定要删除所有本地保存的二维码历史记录吗？此操作无法撤销。") },
+            title = { Text(stringResource(R.string.history_clear_dialog_title)) },
+            text = { Text(stringResource(R.string.history_clear_dialog_body)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -282,12 +286,15 @@ fun HistoryScreen(
                     },
                     modifier = Modifier.testTag("history_confirm_clear_button")
                 ) {
-                    Text("清空", color = MaterialTheme.colorScheme.error)
+                    Text(
+                        text = stringResource(R.string.history_clear),
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showClearDialog = false }) {
-                    Text("取消")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )

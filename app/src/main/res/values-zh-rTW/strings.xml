@@ -1,0 +1,119 @@
+<resources>
+    <string name="tab_scan">掃描</string>
+    <string name="tab_generate">產生</string>
+    <string name="tab_history">歷史紀錄</string>
+    <string name="tab_settings">設定</string>
+
+    <string name="generate_input_hint">輸入網址、文字或任意內容…</string>
+    <string name="generate_clear_desc">清除輸入</string>
+    <string name="generate_paste_desc">貼上剪貼簿內容</string>
+    <string name="generate_length_label">長度：%1$d</string>
+    <string name="generate_options">選項</string>
+    <string name="generate_options_with_ec">選項 (%1$s)</string>
+    <string name="generate_ec_title">容錯糾錯等級</string>
+    <string name="generate_templates_title">快捷範本</string>
+    <string name="template_url_label">網址</string>
+    <string name="template_wifi_label">Wi-Fi</string>
+    <string name="template_email_label">電子郵件</string>
+    <string name="template_phone_label">電話</string>
+    <string name="generate_save">儲存</string>
+    <string name="generate_copy">複製圖片</string>
+    <string name="generate_share">分享</string>
+    <string name="generate_empty_tip">輸入內容即可離線產生高畫質 QR Code</string>
+    <string name="generate_inverted_preview_note">目前為深色反白預覽；儲存、複製或分享的圖片將一律維持白底黑碼以確保最佳掃描相容性。</string>
+
+    <string name="ec_low">低 (L)</string>
+    <string name="ec_medium">中 (M)</string>
+    <string name="ec_quartile">較高 (Q)</string>
+    <string name="ec_high">高 (H)</string>
+
+    <string name="scan_choose_method">選擇掃描方式</string>
+    <string name="scan_offline_note">所有辨識皆在本機離線完成，不會上傳任何圖片或內容</string>
+    <string name="scan_camera_btn">使用相機掃描</string>
+    <string name="scan_gallery_btn">從相簿選取圖片掃描</string>
+    <string name="scan_clipboard_btn">掃描剪貼簿中的圖片</string>
+    <string name="scan_decoding_image">正在解析圖片中的 QR Code…</string>
+    <string name="scan_or_divider">或者</string>
+    <string name="scan_permission_denied_tip">相機權限遭拒絕。您可點擊上方按鈕重新授權，或改用下方的相簿圖片掃描。</string>
+    <string name="scan_permission_required_msg">需要相機權限才能使用即時掃描</string>
+    <string name="camera_close_desc">關閉相機</string>
+    <string name="camera_torch_on_desc">關閉閃光燈</string>
+    <string name="camera_torch_off_desc">開啟閃光燈</string>
+    <string name="camera_flip_desc">切換鏡頭</string>
+    <string name="camera_hint">將 QR Code 對準框內即可自動辨識</string>
+    <string name="camera_pick_gallery">從相簿選取圖片</string>
+    <string name="camera_preview_error">無法啟動相機預覽，請改用相簿圖片掃描</string>
+
+    <string name="scan_source_camera">相機掃描</string>
+    <string name="scan_source_gallery">相簿圖片</string>
+    <string name="scan_source_clipboard_image">剪貼簿圖片</string>
+    <string name="scan_source_clipboard_text">剪貼簿內容</string>
+    <string name="kind_url">網址連結</string>
+    <string name="kind_wifi">Wi-Fi 設定</string>
+    <string name="kind_email">電子郵件</string>
+    <string name="kind_phone">電話號碼</string>
+    <string name="kind_text">純文字</string>
+
+    <string name="scan_result_close_desc">關閉辨識結果</string>
+    <string name="scan_result_open_url">開啟連結</string>
+    <string name="scan_result_copy_text">複製文字</string>
+    <string name="scan_result_to_generate">轉為 QR Code</string>
+    <string name="scan_result_share">分享內容</string>
+
+    <string name="history_paused_banner">歷史紀錄目前已暫停，新產生或掃描的內容將不會儲存。</string>
+    <string name="history_empty_title">尚無歷史紀錄</string>
+    <string name="history_empty_subtitle">產生或掃描的 QR Code 會自動儲存在本機</string>
+    <string name="history_type_generated">產生</string>
+    <string name="history_type_scanned">掃描</string>
+    <string name="history_copy_desc">複製內容</string>
+    <string name="history_delete_desc">刪除紀錄</string>
+    <string name="history_clear">清除</string>
+    <string name="history_pause">暫停</string>
+    <string name="history_resume">繼續</string>
+    <string name="history_clear_dialog_title">清空歷史紀錄？</string>
+    <string name="history_clear_dialog_body">確定要刪除所有本機儲存的 QR Code 歷史紀錄嗎？此操作無法復原。</string>
+    <string name="action_cancel">取消</string>
+
+    <string name="settings_section_generate">QR Code 產生</string>
+    <string name="settings_dark_inverted_title">在深色模式下產生黑底白碼預覽</string>
+    <string name="settings_dark_inverted_desc">在深色模式下，預覽將顯示深色背景上的淺色前景 QR Code。部分掃描器可能難以辨識反白條碼；透過「儲存」「複製圖片」或「分享」匯出的圖片將一律維持白底黑碼。</string>
+    <string name="settings_default_ec_title">預設容錯糾錯等級</string>
+    <string name="settings_theme_title">應用程式外觀主題</string>
+    <string name="theme_system">跟隨系統</string>
+    <string name="theme_light">淺色</string>
+    <string name="theme_dark">深色</string>
+    <string name="settings_language_title">介面語言</string>
+    <string name="lang_system">跟隨系統</string>
+
+    <string name="settings_section_scan">QR Code 掃描</string>
+    <string name="settings_sound_title">掃描成功時播放提示音</string>
+    <string name="settings_sound_desc">成功辨識 QR Code 時播放清晰的提示音效。</string>
+    <string name="settings_vibrate_title">掃描成功時震動提示</string>
+    <string name="settings_vibrate_desc">成功辨識 QR Code 時觸發輕觸震動回饋。</string>
+    <string name="settings_pause_history_title">暫停歷史紀錄</string>
+    <string name="settings_pause_history_desc">開啟後，新產生或掃描的 QR Code 將不會記錄至本機歷史清單。</string>
+
+    <string name="settings_section_about">關於 QRcode</string>
+    <string name="about_title">QRcode · 離線 QR Code 產生器與掃描器</string>
+    <string name="about_version_line">版本 v%1$s · 純離線本機執行 · 不上傳任何使用者資料</string>
+    <string name="about_arch_line">目標架構：arm64-v8a / x86_64 (64-bit) · 支援 Android 15</string>
+
+    <string name="msg_qr_gen_failed">QR Code 產生失敗</string>
+    <string name="msg_saved_gallery">已儲存至相簿 (Pictures/QRcode)</string>
+    <string name="msg_save_failed">儲存失敗：%1$s</string>
+    <string name="msg_copied_image">已複製 QR Code 圖片到剪貼簿</string>
+    <string name="msg_copy_failed">複製失敗：%1$s</string>
+    <string name="msg_copied_text">已複製內容</string>
+    <string name="msg_share_failed">無法開啟系統分享</string>
+    <string name="msg_open_url_failed">無法開啟該連結</string>
+    <string name="msg_clipboard_no_text">剪貼簿中沒有可用文字</string>
+    <string name="msg_clipboard_pasted">已貼上剪貼簿內容</string>
+    <string name="msg_no_qr_in_image">未在此圖片中辨識到 QR Code</string>
+    <string name="msg_clipboard_empty">剪貼簿中沒有圖片或文字</string>
+    <string name="msg_history_cleared">歷史紀錄已清空</string>
+    <string name="msg_history_paused">已暫停紀錄歷史</string>
+    <string name="msg_history_resumed">已恢復紀錄歷史</string>
+    <string name="chooser_share_qr">分享 QR Code</string>
+    <string name="chooser_share_text">分享內容</string>
+    <string name="error_unknown">未知錯誤</string>
+</resources>

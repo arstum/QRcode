@@ -1,0 +1,119 @@
+<resources>
+    <string name="tab_scan">Escanear</string>
+    <string name="tab_generate">Generar</string>
+    <string name="tab_history">Historial</string>
+    <string name="tab_settings">Ajustes</string>
+
+    <string name="generate_input_hint">Ingresa URL, texto o cualquier contenido…</string>
+    <string name="generate_clear_desc">Borrar entrada</string>
+    <string name="generate_paste_desc">Pegar del portapapeles</string>
+    <string name="generate_length_label">Longitud: %1$d</string>
+    <string name="generate_options">Opciones</string>
+    <string name="generate_options_with_ec">Opciones (%1$s)</string>
+    <string name="generate_ec_title">Nivel de corrección de errores</string>
+    <string name="generate_templates_title">Plantillas rápidas</string>
+    <string name="template_url_label">URL</string>
+    <string name="template_wifi_label">Wi-Fi</string>
+    <string name="template_email_label">Correo</string>
+    <string name="template_phone_label">Teléfono</string>
+    <string name="generate_save">Guardar</string>
+    <string name="generate_copy">Copiar</string>
+    <string name="generate_share">Compartir</string>
+    <string name="generate_empty_tip">Ingresa texto o un enlace para generar un código QR sin conexión</string>
+    <string name="generate_inverted_preview_note">Vista previa invertida activa; las imágenes guardadas, copiadas o compartidas siempre serán negras sobre fondo blanco.</string>
+
+    <string name="ec_low">Bajo (L)</string>
+    <string name="ec_medium">Medio (M)</string>
+    <string name="ec_quartile">Cuartil (Q)</string>
+    <string name="ec_high">Alto (H)</string>
+
+    <string name="scan_choose_method">Elige un método de escaneo</string>
+    <string name="scan_offline_note">Todo el reconocimiento funciona 100%% sin conexión; no se sube ningún dato</string>
+    <string name="scan_camera_btn">Escanear con cámara</string>
+    <string name="scan_gallery_btn">Elegir imagen de la galería</string>
+    <string name="scan_clipboard_btn">Escanear imagen del portapapeles</string>
+    <string name="scan_decoding_image">Leyendo código QR de la imagen…</string>
+    <string name="scan_or_divider">o</string>
+    <string name="scan_permission_denied_tip">Permiso de cámara denegado. Toca arriba para concederlo o elige una imagen de la galería abajo.</string>
+    <string name="scan_permission_required_msg">Se requiere permiso de cámara para escanear en vivo</string>
+    <string name="camera_close_desc">Cerrar cámara</string>
+    <string name="camera_torch_on_desc">Apagar linterna</string>
+    <string name="camera_torch_off_desc">Encender linterna</string>
+    <string name="camera_flip_desc">Cambiar cámara</string>
+    <string name="camera_hint">Alinea el código QR dentro del recuadro</string>
+    <string name="camera_pick_gallery">Elegir de la galería</string>
+    <string name="camera_preview_error">No se pudo iniciar la cámara. Prueba escaneando desde la galería.</string>
+
+    <string name="scan_source_camera">Escaneo con cámara</string>
+    <string name="scan_source_gallery">Imagen de galería</string>
+    <string name="scan_source_clipboard_image">Imagen del portapapeles</string>
+    <string name="scan_source_clipboard_text">Texto del portapapeles</string>
+    <string name="kind_url">Enlace web</string>
+    <string name="kind_wifi">Config. Wi-Fi</string>
+    <string name="kind_email">Correo</string>
+    <string name="kind_phone">Teléfono</string>
+    <string name="kind_text">Texto</string>
+
+    <string name="scan_result_close_desc">Cerrar resultado</string>
+    <string name="scan_result_open_url">Abrir enlace</string>
+    <string name="scan_result_copy_text">Copiar texto</string>
+    <string name="scan_result_to_generate">Crear QR</string>
+    <string name="scan_result_share">Compartir</string>
+
+    <string name="history_paused_banner">El historial está en pausa; los nuevos códigos no se guardarán.</string>
+    <string name="history_empty_title">Sin historial aún</string>
+    <string name="history_empty_subtitle">Los códigos QR generados y escaneados se guardan localmente aquí</string>
+    <string name="history_type_generated">Generado</string>
+    <string name="history_type_scanned">Escaneado</string>
+    <string name="history_copy_desc">Copiar contenido</string>
+    <string name="history_delete_desc">Eliminar registro</string>
+    <string name="history_clear">Limpiar</string>
+    <string name="history_pause">Pausar</string>
+    <string name="history_resume">Reanudar</string>
+    <string name="history_clear_dialog_title">¿Limpiar historial?</string>
+    <string name="history_clear_dialog_body">¿Seguro que deseas eliminar todo el historial guardado localmente? Esta acción no se puede deshacer.</string>
+    <string name="action_cancel">Cancelar</string>
+
+    <string name="settings_section_generate">Generación de QR</string>
+    <string name="settings_dark_inverted_title">QR blanco sobre fondo negro en modo oscuro</string>
+    <string name="settings_dark_inverted_desc">En modo oscuro, la vista previa usa módulos claros sobre fondo oscuro. Algunos lectores pueden tener problemas; las imágenes exportadas siempre serán negras sobre fondo blanco.</string>
+    <string name="settings_default_ec_title">Corrección de errores predeterminada</string>
+    <string name="settings_theme_title">Tema de la aplicación</string>
+    <string name="theme_system">Sistema</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Oscuro</string>
+    <string name="settings_language_title">Idioma de la interfaz</string>
+    <string name="lang_system">Sistema</string>
+
+    <string name="settings_section_scan">Escaneo de QR</string>
+    <string name="settings_sound_title">Reproducir sonido al escanear</string>
+    <string name="settings_sound_desc">Reproduce un tono de confirmación al detectar un código QR.</string>
+    <string name="settings_vibrate_title">Vibrar al escanear</string>
+    <string name="settings_vibrate_desc">Emite una vibración suave al reconocer un código QR.</string>
+    <string name="settings_pause_history_title">Pausar historial</string>
+    <string name="settings_pause_history_desc">Cuando está activado, los nuevos códigos no se guardan en el historial local.</string>
+
+    <string name="settings_section_about">Acerca de QRcode</string>
+    <string name="about_title">QRcode · Generador y Escáner QR sin conexión</string>
+    <string name="about_version_line">Versión v%1$s · 100%% sin conexión · Sin recopilación de datos</string>
+    <string name="about_arch_line">Arquitectura: arm64-v8a / x86_64 (64-bit) · Compatible con Android 15</string>
+
+    <string name="msg_qr_gen_failed">Error al generar el código QR</string>
+    <string name="msg_saved_gallery">Guardado en galería (Pictures/QRcode)</string>
+    <string name="msg_save_failed">Error al guardar: %1$s</string>
+    <string name="msg_copied_image">Imagen QR copiada al portapapeles</string>
+    <string name="msg_copy_failed">Error al copiar: %1$s</string>
+    <string name="msg_copied_text">Texto copiado</string>
+    <string name="msg_share_failed">No se pudo abrir el menú de compartir</string>
+    <string name="msg_open_url_failed">No se pudo abrir el enlace</string>
+    <string name="msg_clipboard_no_text">No hay texto en el portapapeles</string>
+    <string name="msg_clipboard_pasted">Pegado del portapapeles</string>
+    <string name="msg_no_qr_in_image">No se detectó ningún código QR en la imagen</string>
+    <string name="msg_clipboard_empty">No hay imagen ni texto en el portapapeles</string>
+    <string name="msg_history_cleared">Historial limpiado</string>
+    <string name="msg_history_paused">Historial en pausa</string>
+    <string name="msg_history_resumed">Historial reanudado</string>
+    <string name="chooser_share_qr">Compartir código QR</string>
+    <string name="chooser_share_text">Compartir contenido</string>
+    <string name="error_unknown">Error desconocido</string>
+</resources>

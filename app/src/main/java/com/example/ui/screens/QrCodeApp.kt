@@ -1,5 +1,9 @@
 package com.example.ui.screens
 
+import android.content.ContextWrapper
+import android.content.res.Configuration
+import android.content.res.Resources
+import android.os.LocaleList
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
@@ -32,12 +36,16 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -46,6 +54,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.R
+import com.example.data.model.AppLanguage
 import com.example.data.model.AppThemeMode
 import com.example.ui.theme.QRcodeTheme
 import com.example.ui.viewmodel.AppDestination
@@ -60,16 +70,16 @@ private data class NavTabMeta(
 
 private val appNavTabs = listOf(
     NavTabMeta(
-        destination = AppDestination.GENERATE,
-        selectedIcon = Icons.Filled.QrCode2,
-        unselectedIcon = Icons.Outlined.QrCode2,
-        testTag = "nav_tab_generate"
-    ),
-    NavTabMeta(
         destination = AppDestination.SCAN,
         selectedIcon = Icons.Filled.QrCodeScanner,
         unselectedIcon = Icons.Outlined.QrCodeScanner,
         testTag = "nav_tab_scan"
+    ),
+    NavTabMeta(
+        destination = AppDestination.GENERATE,
+        selectedIcon = Icons.Filled.QrCode2,
+        unselectedIcon = Icons.Outlined.QrCode2,
+        testTag = "nav_tab_generate"
     ),
     NavTabMeta(
         destination = AppDestination.HISTORY,
@@ -93,6 +103,25 @@ fun QrCodeApp(viewModel: QrViewModel) {
     val scanState by viewModel.scanState.collectAsStateWithLifecycle()
     val historyList by viewModel.historyList.collectAsStateWithLifecycle()
 
+    val baseContext = LocalContext.current
+    val baseConfig = LocalConfiguration.current
+    val localizedConfig = remember(baseConfig, preferences.appLanguage) {
+        Configuration(baseConfig).apply {
+            val locales = if (preferences.appLanguage == AppLanguage.SYSTEM) {
+                LocaleList.getDefault()
+            } else {
+                LocaleList.forLanguageTags(preferences.appLanguage.tag)
+            }
+            setLocales(locales)
+        }
+    }
+    val localizedContext = remember(baseContext, baseConfig, preferences.appLanguage) {
+        val resourcesContext = baseContext.createConfigurationContext(localizedConfig)
+        object : ContextWrapper(baseContext) {
+            override fun getResources(): Resources = resourcesContext.resources
+        }
+    }
+
     val systemDark = isSystemInDarkTheme()
     val useDarkTheme = when (preferences.themeMode) {
         AppThemeMode.SYSTEM -> systemDark
@@ -100,198 +129,205 @@ fun QrCodeApp(viewModel: QrViewModel) {
         AppThemeMode.LIGHT -> false
     }
 
-    QRcodeTheme(darkTheme = useDarkTheme) {
-        val navController = rememberNavController()
-        val backStackEntry by navController.currentBackStackEntryAsState()
-        val currentRoute = backStackEntry?.destination?.route ?: AppDestination.GENERATE.route
-        val currentTab = AppDestination.entries.firstOrNull { it.route == currentRoute }
-            ?: AppDestination.GENERATE
+    CompositionLocalProvider(
+        LocalContext provides localizedContext,
+        LocalConfiguration provides localizedConfig
+    ) {
+        QRcodeTheme(darkTheme = useDarkTheme) {
+            val navController = rememberNavController()
+            val backStackEntry by navController.currentBackStackEntryAsState()
+            val currentRoute = backStackEntry?.destination?.route ?: AppDestination.SCAN.route
+            val currentTab = AppDestination.entries.firstOrNull { it.route == currentRoute }
+                ?: AppDestination.SCAN
 
-        val snackbarHostState = remember { SnackbarHostState() }
-        LaunchedEffect(Unit) {
-            viewModel.snackbarMessages.collect { msg ->
-                snackbarHostState.currentSnackbarData?.dismiss()
-                snackbarHostState.showSnackbar(msg)
-            }
-        }
-
-        val navigateToTab: (AppDestination) -> Unit = { dest ->
-            if (dest != AppDestination.SCAN && scanState.isCameraActive) {
-                viewModel.closeCameraScanner()
-            }
-            navController.navigate(dest.route) {
-                popUpTo(navController.graph.findStartDestination().id) {
-                    saveState = true
+            val snackbarHostState = remember { SnackbarHostState() }
+            LaunchedEffect(localizedContext) {
+                viewModel.snackbarMessages.collect { uiText ->
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                    snackbarHostState.showSnackbar(uiText.asString(localizedContext))
                 }
-                launchSingleTop = true
-                restoreState = true
             }
-        }
 
-        val hideChromeForFullScreenCamera =
-            currentTab == AppDestination.SCAN && scanState.isCameraActive
+            val navigateToTab: (AppDestination) -> Unit = { dest ->
+                if (dest != AppDestination.SCAN && scanState.isCameraActive) {
+                    viewModel.closeCameraScanner()
+                }
+                navController.navigate(dest.route) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
 
-        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-            val useNavigationRail = maxWidth >= 600.dp
+            val hideChromeForFullScreenCamera =
+                currentTab == AppDestination.SCAN && scanState.isCameraActive
 
-            Scaffold(
-                modifier = Modifier.fillMaxSize(),
-                contentWindowInsets = WindowInsets.safeDrawing,
-                containerColor = MaterialTheme.colorScheme.background,
-                snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-                topBar = {
-                    if (!hideChromeForFullScreenCamera) {
-                        CenterAlignedTopAppBar(
-                            title = {
-                                Text(
-                                    text = if (currentTab == AppDestination.GENERATE) {
-                                        "QRcode"
-                                    } else {
-                                        "QRcode · ${currentTab.label}"
-                                    },
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                val useNavigationRail = maxWidth >= 600.dp
+
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    contentWindowInsets = WindowInsets.safeDrawing,
+                    containerColor = MaterialTheme.colorScheme.background,
+                    snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+                    topBar = {
+                        if (!hideChromeForFullScreenCamera) {
+                            val appTitle = stringResource(R.string.app_name)
+                            val tabLabel = stringResource(currentTab.labelRes)
+                            CenterAlignedTopAppBar(
+                                title = {
+                                    Text(
+                                        text = "$appTitle · $tabLabel",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                },
+                                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                                    containerColor = MaterialTheme.colorScheme.surface,
+                                    titleContentColor = MaterialTheme.colorScheme.onSurface
                                 )
-                            },
-                            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                            )
+                        }
+                    },
+                    bottomBar = {
+                        if (!useNavigationRail && !hideChromeForFullScreenCamera) {
+                            NavigationBar(
                                 containerColor = MaterialTheme.colorScheme.surface,
-                                titleContentColor = MaterialTheme.colorScheme.onSurface
-                            )
-                        )
-                    }
-                },
-                bottomBar = {
-                    if (!useNavigationRail && !hideChromeForFullScreenCamera) {
-                        NavigationBar(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            tonalElevation = 2.dp
-                        ) {
-                            appNavTabs.forEach { tab ->
-                                val selected = currentRoute == tab.destination.route
-                                NavigationBarItem(
-                                    selected = selected,
-                                    onClick = { navigateToTab(tab.destination) },
-                                    icon = {
-                                        Icon(
-                                            imageVector = if (selected) tab.selectedIcon else tab.unselectedIcon,
-                                            contentDescription = tab.destination.label
-                                        )
-                                    },
-                                    label = {
-                                        Text(
-                                            text = tab.destination.label,
-                                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
-                                        )
-                                    },
-                                    colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                        selectedTextColor = MaterialTheme.colorScheme.primary,
-                                        indicatorColor = MaterialTheme.colorScheme.primaryContainer
-                                    ),
-                                    modifier = Modifier.testTag(tab.testTag)
-                                )
+                                tonalElevation = 2.dp
+                            ) {
+                                appNavTabs.forEach { tab ->
+                                    val selected = currentRoute == tab.destination.route
+                                    val label = stringResource(tab.destination.labelRes)
+                                    NavigationBarItem(
+                                        selected = selected,
+                                        onClick = { navigateToTab(tab.destination) },
+                                        icon = {
+                                            Icon(
+                                                imageVector = if (selected) tab.selectedIcon else tab.unselectedIcon,
+                                                contentDescription = label
+                                            )
+                                        },
+                                        label = {
+                                            Text(
+                                                text = label,
+                                                maxLines = 1,
+                                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+                                            )
+                                        },
+                                        colors = NavigationBarItemDefaults.colors(
+                                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                                        ),
+                                        modifier = Modifier.testTag(tab.testTag)
+                                    )
+                                }
                             }
                         }
                     }
-                }
-            ) { innerPadding ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                ) {
-                    if (useNavigationRail && !hideChromeForFullScreenCamera) {
-                        NavigationRail(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        ) {
-                            appNavTabs.forEach { tab ->
-                                val selected = currentRoute == tab.destination.route
-                                NavigationRailItem(
-                                    selected = selected,
-                                    onClick = { navigateToTab(tab.destination) },
-                                    icon = {
-                                        Icon(
-                                            imageVector = if (selected) tab.selectedIcon else tab.unselectedIcon,
-                                            contentDescription = tab.destination.label
-                                        )
-                                    },
-                                    label = { Text(tab.destination.label) },
-                                    colors = NavigationRailItemDefaults.colors(
-                                        selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                        selectedTextColor = MaterialTheme.colorScheme.primary,
-                                        indicatorColor = MaterialTheme.colorScheme.primaryContainer
-                                    ),
-                                    modifier = Modifier.testTag(tab.testTag)
-                                )
-                            }
-                        }
-                    }
-
-                    NavHost(
-                        navController = navController,
-                        startDestination = AppDestination.GENERATE.route,
-                        modifier = Modifier.weight(1f)
+                ) { innerPadding ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
                     ) {
-                        composable(AppDestination.GENERATE.route) {
-                            GenerateScreen(
-                                state = generateState,
-                                preferences = preferences,
-                                onInputChange = { viewModel.updateGenerateInput(it) },
-                                onErrorCorrectionChange = { viewModel.updateErrorCorrection(it) },
-                                onToggleOptions = { viewModel.toggleGenerateOptions() },
-                                onPasteClipboard = { viewModel.pasteClipboardIntoGenerate() },
-                                onSaveClick = { viewModel.saveCurrentQrToGallery() },
-                                onCopyImageClick = { viewModel.copyCurrentQrImage() },
-                                onShareClick = { viewModel.shareCurrentQrImage() }
-                            )
+                        if (useNavigationRail && !hideChromeForFullScreenCamera) {
+                            NavigationRail(
+                                containerColor = MaterialTheme.colorScheme.surface
+                            ) {
+                                appNavTabs.forEach { tab ->
+                                    val selected = currentRoute == tab.destination.route
+                                    val label = stringResource(tab.destination.labelRes)
+                                    NavigationRailItem(
+                                        selected = selected,
+                                        onClick = { navigateToTab(tab.destination) },
+                                        icon = {
+                                            Icon(
+                                                imageVector = if (selected) tab.selectedIcon else tab.unselectedIcon,
+                                                contentDescription = label
+                                            )
+                                        },
+                                        label = { Text(label, maxLines = 1) },
+                                        colors = NavigationRailItemDefaults.colors(
+                                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                                        ),
+                                        modifier = Modifier.testTag(tab.testTag)
+                                    )
+                                }
+                            }
                         }
 
-                        composable(AppDestination.SCAN.route) {
-                            ScanScreen(
-                                state = scanState,
-                                onOpenCamera = { viewModel.openCameraScanner() },
-                                onCloseCamera = { viewModel.closeCameraScanner() },
-                                onToggleTorch = { viewModel.toggleTorch() },
-                                onToggleLens = { viewModel.toggleCameraLens() },
-                                onCameraQrDetected = { viewModel.onCameraQrDetected(it) },
-                                onPickImageUri = { viewModel.decodeQrFromImageUri(it) },
-                                onScanClipboard = { viewModel.scanFromClipboard() },
-                                onDismissResult = { viewModel.dismissScanResult() },
-                                onUseAsGenerate = { content ->
-                                    viewModel.applyGeneratedTemplate(content)
-                                    navigateToTab(AppDestination.GENERATE)
-                                },
-                                onShowMessage = { viewModel.showMessage(it) }
-                            )
-                        }
+                        NavHost(
+                            navController = navController,
+                            startDestination = AppDestination.SCAN.route,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            composable(AppDestination.GENERATE.route) {
+                                GenerateScreen(
+                                    state = generateState,
+                                    preferences = preferences,
+                                    onInputChange = { viewModel.updateGenerateInput(it) },
+                                    onErrorCorrectionChange = { viewModel.updateErrorCorrection(it) },
+                                    onToggleOptions = { viewModel.toggleGenerateOptions() },
+                                    onPasteClipboard = { viewModel.pasteClipboardIntoGenerate() },
+                                    onSaveClick = { viewModel.saveCurrentQrToGallery() },
+                                    onCopyImageClick = { viewModel.copyCurrentQrImage() },
+                                    onShareClick = { viewModel.shareCurrentQrImage(localizedContext) }
+                                )
+                            }
 
-                        composable(AppDestination.HISTORY.route) {
-                            HistoryScreen(
-                                historyList = historyList,
-                                isHistoryPaused = preferences.pauseHistoryRecording,
-                                onItemClick = { item ->
-                                    viewModel.applyGeneratedTemplate(item.content)
-                                    navigateToTab(AppDestination.GENERATE)
-                                },
-                                onDeleteItem = { viewModel.deleteHistoryItem(it) },
-                                onClearAll = { viewModel.clearAllHistory() },
-                                onTogglePause = { viewModel.togglePauseHistory() },
-                                onShowMessage = { viewModel.showMessage(it) }
-                            )
-                        }
+                            composable(AppDestination.SCAN.route) {
+                                ScanScreen(
+                                    state = scanState,
+                                    onOpenCamera = { viewModel.openCameraScanner() },
+                                    onCloseCamera = { viewModel.closeCameraScanner() },
+                                    onToggleTorch = { viewModel.toggleTorch() },
+                                    onToggleLens = { viewModel.toggleCameraLens() },
+                                    onCameraQrDetected = { viewModel.onCameraQrDetected(it) },
+                                    onPickImageUri = { viewModel.decodeQrFromImageUri(it) },
+                                    onScanClipboard = { viewModel.scanFromClipboard() },
+                                    onDismissResult = { viewModel.dismissScanResult() },
+                                    onUseAsGenerate = { content ->
+                                        viewModel.applyGeneratedTemplate(content)
+                                        navigateToTab(AppDestination.GENERATE)
+                                    },
+                                    onShowMessage = { resId -> viewModel.showMessage(resId) }
+                                )
+                            }
 
-                        composable(AppDestination.SETTINGS.route) {
-                            SettingsScreen(
-                                preferences = preferences,
-                                onDarkModeInvertedChange = { viewModel.setDarkModeInvertedQr(it) },
-                                onPlaySoundChange = { viewModel.setPlaySoundOnScan(it) },
-                                onVibrateChange = { viewModel.setVibrateOnScan(it) },
-                                onPauseHistoryChange = { viewModel.setPauseHistoryRecording(it) },
-                                onDefaultErrorCorrectionChange = {
-                                    viewModel.setDefaultErrorCorrection(it)
-                                },
-                                onThemeModeChange = { viewModel.setThemeMode(it) }
-                            )
+                            composable(AppDestination.HISTORY.route) {
+                                HistoryScreen(
+                                    historyList = historyList,
+                                    isHistoryPaused = preferences.pauseHistoryRecording,
+                                    onItemClick = { item ->
+                                        viewModel.applyGeneratedTemplate(item.content)
+                                        navigateToTab(AppDestination.GENERATE)
+                                    },
+                                    onDeleteItem = { viewModel.deleteHistoryItem(it) },
+                                    onClearAll = { viewModel.clearAllHistory() },
+                                    onTogglePause = { viewModel.togglePauseHistory() },
+                                    onShowMessage = { resId -> viewModel.showMessage(resId) }
+                                )
+                            }
+
+                            composable(AppDestination.SETTINGS.route) {
+                                SettingsScreen(
+                                    preferences = preferences,
+                                    onDarkModeInvertedChange = { viewModel.setDarkModeInvertedQr(it) },
+                                    onPlaySoundChange = { viewModel.setPlaySoundOnScan(it) },
+                                    onVibrateChange = { viewModel.setVibrateOnScan(it) },
+                                    onPauseHistoryChange = { viewModel.setPauseHistoryRecording(it) },
+                                    onDefaultErrorCorrectionChange = {
+                                        viewModel.setDefaultErrorCorrection(it)
+                                    },
+                                    onThemeModeChange = { viewModel.setThemeMode(it) },
+                                    onLanguageChange = { viewModel.setAppLanguage(it) }
+                                )
+                            }
                         }
                     }
                 }

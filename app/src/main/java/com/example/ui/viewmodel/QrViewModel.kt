@@ -1,6 +1,7 @@
 package com.example.ui.viewmodel
 
 import android.app.Application
+import android.content.Context
 import android.graphics.Bitmap
 import android.media.AudioManager
 import android.media.ToneGenerator
@@ -9,11 +10,14 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.R
 import com.example.data.local.QrDatabase
 import com.example.data.local.QrHistoryEntity
 import com.example.data.local.QrPreferencesDataStore
+import com.example.data.model.AppLanguage
 import com.example.data.model.AppThemeMode
 import com.example.data.model.QrErrorCorrection
 import com.example.data.model.QrHistoryType
@@ -33,17 +37,33 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-enum class AppDestination(val route: String, val label: String) {
-    GENERATE("generate", "生成"),
-    SCAN("scan", "扫描"),
-    HISTORY("history", "历史记录"),
-    SETTINGS("settings", "设置")
+sealed interface UiText {
+    data class DynamicString(val value: String) : UiText
+    data class StringResource(
+        @param:StringRes val resId: Int,
+        val args: List<Any> = emptyList()
+    ) : UiText
+
+    fun asString(context: Context): String = when (this) {
+        is DynamicString -> value
+        is StringResource -> if (args.isEmpty()) {
+            context.getString(resId)
+        } else {
+            context.getString(resId, *args.toTypedArray())
+        }
+    }
+}
+
+enum class AppDestination(val route: String, @param:StringRes val labelRes: Int) {
+    SCAN("scan", R.string.tab_scan),
+    GENERATE("generate", R.string.tab_generate),
+    HISTORY("history", R.string.tab_history),
+    SETTINGS("settings", R.string.tab_settings)
 }
 
 data class GenerateUiState(
@@ -87,8 +107,8 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
     private val _scanState = MutableStateFlow(ScanUiState())
     val scanState: StateFlow<ScanUiState> = _scanState.asStateFlow()
 
-    private val _snackbarMessages = MutableSharedFlow<String>(extraBufferCapacity = 4)
-    val snackbarMessages: SharedFlow<String> = _snackbarMessages.asSharedFlow()
+    private val _snackbarMessages = MutableSharedFlow<UiText>(extraBufferCapacity = 4)
+    val snackbarMessages: SharedFlow<UiText> = _snackbarMessages.asSharedFlow()
 
     private var generateHistoryJob: Job? = null
     private var lastCameraScanContent: String? = null
@@ -150,7 +170,7 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
             val context = getApplication<Application>()
             val result = withContext(Dispatchers.Default) {
                 val bitmap = QrCodeEngine.renderExportBitmap(state.inputText, state.errorCorrection)
-                    ?: return@withContext Result.failure<String>(IllegalStateException("二维码生成失败"))
+                    ?: return@withContext Result.failure<String>(IllegalStateException("qr_gen_failed"))
                 try {
                     QrMediaHelper.saveQrBitmapToGallery(context, bitmap)
                 } finally {
@@ -163,9 +183,18 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
                     type = QrHistoryType.GENERATED,
                     errorCorrection = state.errorCorrection
                 )
-                _snackbarMessages.tryEmit("已保存到相册 (Pictures/QRcode)")
+                _snackbarMessages.tryEmit(UiText.StringResource(R.string.msg_saved_gallery))
             }.onFailure { err ->
-                _snackbarMessages.tryEmit("保存失败：${err.message ?: "未知错误"}")
+                if (err.message == "qr_gen_failed") {
+                    _snackbarMessages.tryEmit(UiText.StringResource(R.string.msg_qr_gen_failed))
+                } else {
+                    _snackbarMessages.tryEmit(
+                        UiText.StringResource(
+                            R.string.msg_save_failed,
+                            listOf(err.localizedMessage ?: context.getString(R.string.error_unknown))
+                        )
+                    )
+                }
             }
         }
     }
@@ -177,7 +206,7 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
             val context = getApplication<Application>()
             val result = withContext(Dispatchers.Default) {
                 val bitmap = QrCodeEngine.renderExportBitmap(state.inputText, state.errorCorrection)
-                    ?: return@withContext Result.failure<Unit>(IllegalStateException("二维码生成失败"))
+                    ?: return@withContext Result.failure<Unit>(IllegalStateException("qr_gen_failed"))
                 try {
                     QrMediaHelper.copyQrBitmapToClipboard(context, bitmap)
                 } finally {
@@ -190,26 +219,42 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
                     type = QrHistoryType.GENERATED,
                     errorCorrection = state.errorCorrection
                 )
-                _snackbarMessages.tryEmit("已复制二维码图片到剪贴板")
+                _snackbarMessages.tryEmit(UiText.StringResource(R.string.msg_copied_image))
             }.onFailure { err ->
-                _snackbarMessages.tryEmit("复制失败：${err.message ?: "未知错误"}")
+                if (err.message == "qr_gen_failed") {
+                    _snackbarMessages.tryEmit(UiText.StringResource(R.string.msg_qr_gen_failed))
+                } else {
+                    _snackbarMessages.tryEmit(
+                        UiText.StringResource(
+                            R.string.msg_copy_failed,
+                            listOf(err.localizedMessage ?: context.getString(R.string.error_unknown))
+                        )
+                    )
+                }
             }
         }
     }
 
-    fun shareCurrentQrImage() {
+    fun shareCurrentQrImage(hostContext: Context = getApplication()) {
         val state = _generateState.value
         if (state.inputText.isBlank()) return
         viewModelScope.launch {
-            val context = getApplication<Application>()
-            val result = withContext(Dispatchers.Default) {
-                val bitmap = QrCodeEngine.renderExportBitmap(state.inputText, state.errorCorrection)
-                    ?: return@withContext Result.failure<Unit>(IllegalStateException("二维码生成失败"))
-                try {
-                    QrMediaHelper.shareQrBitmap(context, bitmap, state.inputText)
-                } finally {
-                    bitmap.recycle()
-                }
+            val bitmap = withContext(Dispatchers.Default) {
+                QrCodeEngine.renderExportBitmap(state.inputText, state.errorCorrection)
+            }
+            if (bitmap == null) {
+                _snackbarMessages.tryEmit(UiText.StringResource(R.string.msg_qr_gen_failed))
+                return@launch
+            }
+            val result = try {
+                QrMediaHelper.shareQrBitmap(
+                    context = hostContext,
+                    bitmap = bitmap,
+                    content = state.inputText,
+                    chooserTitle = hostContext.getString(R.string.chooser_share_qr)
+                )
+            } finally {
+                bitmap.recycle()
             }
             result.onSuccess {
                 repository.recordHistoryIfActive(
@@ -218,7 +263,7 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
                     errorCorrection = state.errorCorrection
                 )
             }.onFailure {
-                _snackbarMessages.tryEmit("无法打开系统分享")
+                _snackbarMessages.tryEmit(UiText.StringResource(R.string.msg_share_failed))
             }
         }
     }
@@ -226,10 +271,10 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
     fun pasteClipboardIntoGenerate() {
         val text = QrMediaHelper.readClipboardText(getApplication())
         if (text.isNullOrBlank()) {
-            _snackbarMessages.tryEmit("剪贴板中没有可用文本")
+            _snackbarMessages.tryEmit(UiText.StringResource(R.string.msg_clipboard_no_text))
         } else {
             updateGenerateInput(text, recordDebounced = true)
-            _snackbarMessages.tryEmit("已粘贴剪贴板内容")
+            _snackbarMessages.tryEmit(UiText.StringResource(R.string.msg_clipboard_pasted))
         }
     }
 
@@ -261,10 +306,13 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
 
         lastCameraScanContent = content
         lastCameraScanTimeMs = now
-        handleDecodedQr(content, sourceLabel = "摄像头扫描")
+        handleDecodedQr(content, sourceLabelRes = R.string.scan_source_camera)
     }
 
-    fun decodeQrFromImageUri(uri: Uri, sourceLabel: String = "相册图片") {
+    fun decodeQrFromImageUri(
+        uri: Uri,
+        @StringRes sourceLabelRes: Int = R.string.scan_source_gallery
+    ) {
         viewModelScope.launch {
             _scanState.update { it.copy(isDecodingImage = true) }
             val decoded = withContext(Dispatchers.Default) {
@@ -278,9 +326,9 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
             }
             _scanState.update { it.copy(isDecodingImage = false) }
             if (decoded.isNullOrBlank()) {
-                _snackbarMessages.tryEmit("未在该图片中识别到二维码")
+                _snackbarMessages.tryEmit(UiText.StringResource(R.string.msg_no_qr_in_image))
             } else {
-                handleDecodedQr(decoded, sourceLabel = sourceLabel)
+                handleDecodedQr(decoded, sourceLabelRes = sourceLabelRes)
             }
         }
     }
@@ -289,22 +337,22 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
         val context = getApplication<Application>()
         val imageUri = QrMediaHelper.readClipboardImageUri(context)
         if (imageUri != null) {
-            decodeQrFromImageUri(imageUri, sourceLabel = "剪贴板图片")
+            decodeQrFromImageUri(imageUri, sourceLabelRes = R.string.scan_source_clipboard_image)
             return
         }
         val text = QrMediaHelper.readClipboardText(context)
         if (!text.isNullOrBlank()) {
-            handleDecodedQr(text, sourceLabel = "剪贴板内容")
+            handleDecodedQr(text, sourceLabelRes = R.string.scan_source_clipboard_text)
         } else {
-            _snackbarMessages.tryEmit("剪贴板中没有图片或文本")
+            _snackbarMessages.tryEmit(UiText.StringResource(R.string.msg_clipboard_empty))
         }
     }
 
-    private fun handleDecodedQr(content: String, sourceLabel: String) {
+    private fun handleDecodedQr(content: String, @StringRes sourceLabelRes: Int) {
         triggerScanFeedback()
         _scanState.update {
             it.copy(
-                activeResult = ScannedResult(content = content, sourceLabel = sourceLabel)
+                activeResult = ScannedResult(content = content, sourceLabelRes = sourceLabelRes)
             )
         }
         viewModelScope.launch {
@@ -364,7 +412,7 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
     fun clearAllHistory() {
         viewModelScope.launch {
             repository.clearHistory()
-            _snackbarMessages.tryEmit("历史记录已清空")
+            _snackbarMessages.tryEmit(UiText.StringResource(R.string.msg_history_cleared))
         }
     }
 
@@ -376,7 +424,11 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
     fun setPauseHistoryRecording(paused: Boolean) {
         viewModelScope.launch {
             repository.setPauseHistoryRecording(paused)
-            _snackbarMessages.tryEmit(if (paused) "已暂停记录历史" else "已恢复记录历史")
+            _snackbarMessages.tryEmit(
+                UiText.StringResource(
+                    if (paused) R.string.msg_history_paused else R.string.msg_history_resumed
+                )
+            )
         }
     }
 
@@ -403,7 +455,11 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { repository.setThemeMode(mode) }
     }
 
-    fun showMessage(msg: String) {
-        _snackbarMessages.tryEmit(msg)
+    fun setAppLanguage(language: AppLanguage) {
+        viewModelScope.launch { repository.setAppLanguage(language) }
+    }
+
+    fun showMessage(@StringRes resId: Int) {
+        _snackbarMessages.tryEmit(UiText.StringResource(resId))
     }
 }

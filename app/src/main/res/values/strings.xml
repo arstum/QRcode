@@ -1,21 +1,137 @@
 <resources>
-    <string name="app_name">QRcode</string>
-    <string name="tab_generate">生成</string>
-    <string name="tab_scan">扫描</string>
-    <string name="tab_history">历史记录</string>
-    <string name="tab_settings">设置</string>
-    <string name="generate_input_hint">输入网址、文本或任意内容…</string>
-    <string name="generate_length_label">长度：%1$d</string>
-    <string name="generate_options">选项</string>
-    <string name="generate_save">保存</string>
-    <string name="generate_copy">复制图片</string>
-    <string name="generate_share">分享</string>
-    <string name="generate_empty_tip">输入内容即可离线生成高清二维码</string>
-    <string name="scan_camera_btn">用摄像头扫描</string>
-    <string name="scan_gallery_btn">从相册选择图片扫描</string>
-    <string name="scan_clipboard_btn">扫描剪贴板中的图片</string>
-    <string name="scan_or_divider">或者</string>
-    <string name="history_clear">清除</string>
-    <string name="history_pause">暂停</string>
-    <string name="history_resume">继续</string>
+    <string name="app_name" translatable="false">QRcode</string>
+
+    <!-- Navigation Tabs -->
+    <string name="tab_scan">Scan</string>
+    <string name="tab_generate">Generate</string>
+    <string name="tab_history">History</string>
+    <string name="tab_settings">Settings</string>
+
+    <!-- Generate Screen -->
+    <string name="generate_input_hint">Enter URL, text, or any content…</string>
+    <string name="generate_clear_desc">Clear input</string>
+    <string name="generate_paste_desc">Paste from clipboard</string>
+    <string name="generate_length_label">Length: %1$d</string>
+    <string name="generate_options">Options</string>
+    <string name="generate_options_with_ec">Options (%1$s)</string>
+    <string name="generate_ec_title">Error Correction Level</string>
+    <string name="generate_templates_title">Quick Templates</string>
+    <string name="template_url_label">URL</string>
+    <string name="template_wifi_label">Wi-Fi</string>
+    <string name="template_email_label">Email</string>
+    <string name="template_phone_label">Phone</string>
+    <string name="template_wifi_sample" translatable="false">WIFI:T:WPA;S:NetworkName;P:Password;;</string>
+    <string name="generate_save">Save</string>
+    <string name="generate_copy">Copy Image</string>
+    <string name="generate_share">Share</string>
+    <string name="generate_empty_tip">Enter content to generate a crisp QR code offline</string>
+    <string name="generate_inverted_preview_note">Dark inverted preview is active; saved, copied, or shared images always stay black-on-white for maximum scanner compatibility.</string>
+
+    <!-- Error Correction Levels -->
+    <string name="ec_low">Low (L)</string>
+    <string name="ec_medium">Medium (M)</string>
+    <string name="ec_quartile">Quartile (Q)</string>
+    <string name="ec_high">High (H)</string>
+
+    <!-- Scan Screen -->
+    <string name="scan_choose_method">Choose Scan Method</string>
+    <string name="scan_offline_note">All recognition runs 100%% offline on-device; nothing is uploaded</string>
+    <string name="scan_camera_btn">Scan with Camera</string>
+    <string name="scan_gallery_btn">Pick Image from Gallery</string>
+    <string name="scan_clipboard_btn">Scan Clipboard Image</string>
+    <string name="scan_decoding_image">Decoding QR code from image…</string>
+    <string name="scan_or_divider">or</string>
+    <string name="scan_permission_denied_tip">Camera permission denied. Tap above to grant permission, or pick an image from your gallery below.</string>
+    <string name="scan_permission_required_msg">Camera permission is required for live scanning</string>
+    <string name="camera_close_desc">Close camera</string>
+    <string name="camera_torch_on_desc">Turn off flashlight</string>
+    <string name="camera_torch_off_desc">Turn on flashlight</string>
+    <string name="camera_flip_desc">Switch camera</string>
+    <string name="camera_hint">Align the QR code inside the frame</string>
+    <string name="camera_pick_gallery">Choose from Gallery</string>
+    <string name="camera_preview_error">Unable to start camera preview. Try scanning from Gallery instead.</string>
+
+    <!-- Scan Sources & Content Kinds -->
+    <string name="scan_source_camera">Camera Scan</string>
+    <string name="scan_source_gallery">Gallery Image</string>
+    <string name="scan_source_clipboard_image">Clipboard Image</string>
+    <string name="scan_source_clipboard_text">Clipboard Text</string>
+    <string name="kind_url">Web Link</string>
+    <string name="kind_wifi">Wi-Fi Config</string>
+    <string name="kind_email">Email</string>
+    <string name="kind_phone">Phone Number</string>
+    <string name="kind_text">Plain Text</string>
+
+    <!-- Scan Result Sheet -->
+    <string name="scan_result_close_desc">Close scan result</string>
+    <string name="scan_result_open_url">Open Link</string>
+    <string name="scan_result_copy_text">Copy Text</string>
+    <string name="scan_result_to_generate">Create QR</string>
+    <string name="scan_result_share">Share Content</string>
+
+    <!-- History Screen -->
+    <string name="history_paused_banner">History recording is paused; new generated or scanned codes will not be saved.</string>
+    <string name="history_empty_title">No History Yet</string>
+    <string name="history_empty_subtitle">Generated and scanned QR codes are saved locally here</string>
+    <string name="history_type_generated">Generated</string>
+    <string name="history_type_scanned">Scanned</string>
+    <string name="history_copy_desc">Copy content</string>
+    <string name="history_delete_desc">Delete item</string>
+    <string name="history_clear">Clear</string>
+    <string name="history_pause">Pause</string>
+    <string name="history_resume">Resume</string>
+    <string name="history_clear_dialog_title">Clear History?</string>
+    <string name="history_clear_dialog_body">Are you sure you want to delete all locally saved QR code history? This action cannot be undone.</string>
+    <string name="action_cancel">Cancel</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_section_generate">QR Code Generation</string>
+    <string name="settings_dark_inverted_title">White QR on black background in dark mode</string>
+    <string name="settings_dark_inverted_desc">In dark mode, preview uses light modules on a dark background. Some scanners may struggle with inverted codes; saved, copied, and shared images always stay black-on-white.</string>
+    <string name="settings_default_ec_title">Default Error Correction Level</string>
+    <string name="settings_theme_title">App Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_language_title">Interface Language</string>
+    <string name="lang_system">System</string>
+    <string name="lang_zh_cn" translatable="false">简体中文</string>
+    <string name="lang_zh_tw" translatable="false">繁體中文</string>
+    <string name="lang_en" translatable="false">English</string>
+    <string name="lang_ja" translatable="false">日本語</string>
+    <string name="lang_ko" translatable="false">한국어</string>
+    <string name="lang_es" translatable="false">Español</string>
+
+    <string name="settings_section_scan">QR Code Scanning</string>
+    <string name="settings_sound_title">Play sound on successful scan</string>
+    <string name="settings_sound_desc">Play a clear confirmation tone when a QR code is recognized.</string>
+    <string name="settings_vibrate_title">Vibrate on successful scan</string>
+    <string name="settings_vibrate_desc">Trigger gentle haptic feedback when a QR code is decoded.</string>
+    <string name="settings_pause_history_title">Pause history recording</string>
+    <string name="settings_pause_history_desc">When enabled, newly generated or scanned QR codes will not be added to local history.</string>
+
+    <string name="settings_section_about">About QRcode</string>
+    <string name="about_title">QRcode · Offline QR Generator &amp; Scanner</string>
+    <string name="about_version_line">Version v%1$s · 100%% offline · Zero data collection</string>
+    <string name="about_arch_line">Target ABI: arm64-v8a / x86_64 (64-bit) · Android 15 Ready</string>
+
+    <!-- Feedback Messages & Choosers -->
+    <string name="msg_qr_gen_failed">Failed to generate QR code</string>
+    <string name="msg_saved_gallery">Saved to Gallery (Pictures/QRcode)</string>
+    <string name="msg_save_failed">Save failed: %1$s</string>
+    <string name="msg_copied_image">Copied QR code image to clipboard</string>
+    <string name="msg_copy_failed">Copy failed: %1$s</string>
+    <string name="msg_copied_text">Copied to clipboard</string>
+    <string name="msg_share_failed">Unable to open system share sheet</string>
+    <string name="msg_open_url_failed">Unable to open link</string>
+    <string name="msg_clipboard_no_text">No text found in clipboard</string>
+    <string name="msg_clipboard_pasted">Pasted from clipboard</string>
+    <string name="msg_no_qr_in_image">No QR code detected in this image</string>
+    <string name="msg_clipboard_empty">No image or text found in clipboard</string>
+    <string name="msg_history_cleared">History cleared</string>
+    <string name="msg_history_paused">History recording paused</string>
+    <string name="msg_history_resumed">History recording resumed</string>
+    <string name="chooser_share_qr">Share QR Code</string>
+    <string name="chooser_share_text">Share Content</string>
+    <string name="error_unknown">Unknown error</string>
 </resources>

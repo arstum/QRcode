@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
 import com.example.data.model.QrErrorCorrection
@@ -43,20 +44,40 @@ class ExampleRobolectricTest {
     }
 
     @Test
-    fun `main tabs and qr generation UI render and switch cleanly`() {
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("generate_input_field").assertIsDisplayed()
-        composeRule.onNodeWithTag("generate_input_field").performTextInput("https://qrcode.app")
-        composeRule.waitForIdle()
+    fun `qr yuv camera frame decode succeeds`() {
+        val payload = "https://play.google.com/store/apps"
+        val bitmap = QrCodeEngine.renderExportBitmap(payload, QrErrorCorrection.M, targetPixels = 400)!!
+        val w = bitmap.width
+        val h = bitmap.height
+        val pixels = IntArray(w * h)
+        bitmap.getPixels(pixels, 0, w, 0, 0, w, h)
+        bitmap.recycle()
 
-        composeRule.onNodeWithText("长度：18").assertIsDisplayed()
-        composeRule.onNodeWithTag("qr_code_canvas").assertIsDisplayed()
+        val yPlane = ByteArray(w * h) { idx ->
+            val c = pixels[idx]
+            val r = (c shr 16) and 0xFF
+            val g = (c shr 8) and 0xFF
+            val b = c and 0xFF
+            ((0.299 * r + 0.587 * g + 0.114 * b).toInt()).coerceIn(0, 255).toByte()
+        }
+        val decoded = QrCodeEngine.decodeYuvFrame(yPlane, w, h)
+        assertEquals(payload, decoded)
+    }
 
-        composeRule.onNodeWithTag("nav_tab_scan").performClick()
+    @Test
+    fun `main tabs and live language switching work cleanly`() {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("scan_camera_button").assertIsDisplayed()
         composeRule.onNodeWithTag("scan_gallery_button").assertIsDisplayed()
         composeRule.onNodeWithTag("scan_clipboard_button").assertIsDisplayed()
+
+        composeRule.onNodeWithTag("nav_tab_generate").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("generate_input_field").assertIsDisplayed()
+        composeRule.onNodeWithTag("generate_input_field").performTextInput("https://qrcode.app")
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Length: 18").assertIsDisplayed()
+        composeRule.onNodeWithTag("qr_code_canvas").assertIsDisplayed()
 
         composeRule.onNodeWithTag("nav_tab_history").performClick()
         composeRule.waitForIdle()
@@ -65,7 +86,33 @@ class ExampleRobolectricTest {
 
         composeRule.onNodeWithTag("nav_tab_settings").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("settings_dark_inverted_checkbox").assertIsDisplayed()
-        composeRule.onNodeWithTag("settings_sound_checkbox").assertIsDisplayed()
+
+        // Switch language to Simplified Chinese in-app and verify immediate update
+        composeRule.onNodeWithTag("settings_lang_zh_cn").performScrollTo().performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching {
+                composeRule.onNodeWithText("界面语言").assertIsDisplayed()
+                true
+            }.getOrDefault(false)
+        }
+
+        composeRule.onNodeWithTag("nav_tab_generate").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching {
+                composeRule.onNodeWithText("长度：18").assertIsDisplayed()
+                true
+            }.getOrDefault(false)
+        }
+
+        // Switch language to Japanese and verify immediate update
+        composeRule.onNodeWithTag("nav_tab_settings").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("settings_lang_ja").performScrollTo().performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching {
+                composeRule.onNodeWithText("表示言語").assertIsDisplayed()
+                true
+            }.getOrDefault(false)
+        }
     }
 }
