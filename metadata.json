@@ -1,0 +1,6 @@
+{
+  "name": "QRcode",
+  "description": "离线二维码生成与扫描工具，支持实时摄像头扫码、相册图片识别、深色模式适配与历史记录管理。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

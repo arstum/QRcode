@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">QRcode</string>
+    <string name="tab_generate">生成</string>
+    <string name="tab_scan">扫描</string>
+    <string name="tab_history">历史记录</string>
+    <string name="tab_settings">设置</string>
+    <string name="generate_input_hint">输入网址、文本或任意内容…</string>
+    <string name="generate_length_label">长度：%1$d</string>
+    <string name="generate_options">选项</string>
+    <string name="generate_save">保存</string>
+    <string name="generate_copy">复制图片</string>
+    <string name="generate_share">分享</string>
+    <string name="generate_empty_tip">输入内容即可离线生成高清二维码</string>
+    <string name="scan_camera_btn">用摄像头扫描</string>
+    <string name="scan_gallery_btn">从相册选择图片扫描</string>
+    <string name="scan_clipboard_btn">扫描剪贴板中的图片</string>
+    <string name="scan_or_divider">或者</string>
+    <string name="history_clear">清除</string>
+    <string name="history_pause">暂停</string>
+    <string name="history_resume">继续</string>
+</resources>
